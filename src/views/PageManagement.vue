@@ -1,67 +1,107 @@
 <template>
   <div class="w-full overflow-hidden">
     <template v-if="isReady">
-      <section class="mb-16">
+      <!-- Fade In dari atas -->
+      <section 
+        ref="section1"
+        class="mb-16 animate-on-scroll" 
+        data-animation="fade-in-down"
+        id="home"
+      >
         <KeunggulanPage :pageData="PageManagementData" />
       </section>
 
-      <section id="PilarPSG" class="mb-10">
-        <PilarPSG :pageData="PageManagementData" />
+      <section v-if="true" id="OurClients">
+          <OurClients :pageData="PageManagementData" />
       </section>
 
-      <section id="strategyConsultant" class="mb-16">
-        <StrategyConsultant :pageData="PageManagementData" />
-      </section>
-
-      <section id="realLife" class="mb-16">
-        <RealLife :pageData="PageManagementData" />
-      </section>
-
-      <section id="AboutPSG" class="mb-16">
+      <section 
+        ref="section2"
+        id="AboutPSG" 
+        class="mb-16 animate-on-scroll" 
+        data-animation="fade-in-up"
+      >
         <AboutPSG :pageData="PageManagementData" />
       </section>
 
-      <section id="ourTeam" class="mb-16">
-        <OurTeam :pageData="PageManagementData" />
+      <!-- Slide dari kiri -->
+      <section 
+        ref="section3"
+        id="PilarPSG" 
+        class="mb-10 animate-on-scroll" 
+        data-animation="slide-in-left"
+      >
+        <PilarPSG :pageData="PageManagementData" />
       </section>
 
-      <section id="ourConsultant" class="mb-16">
-        <OurConsultant :pageData="PageManagementData" />
+      <section 
+        ref="section4"
+        id="IntegrationPage" 
+        class="mb-10 animate-on-scroll" 
+        data-animation="slide-in-left"
+      >
+        <IntegrationPage :pageData="PageManagementData" />
       </section>
 
-      <section id="guaranteedAccount" class="mb-16">
-        <GuaranteedAccount :pageData="PageManagementData" />
+      <section 
+        ref="section5"
+        id="StepsPage" 
+        class="mb-10 animate-on-scroll" 
+        data-animation="slide-in-left"
+      >
+        <StepsPage :pageData="PageManagementData" />
+      </section>
+      
+      <section 
+        ref="section6"
+        id="SimplifyAnalytics" 
+        class="mb-10 animate-on-scroll" 
+        data-animation="slide-in-left"
+      >
+        <SimplifyAnalytics :pageData="PageManagementData" />
+      </section>
+      <!-- Zoom In -->
+      <section 
+        ref="section7"    
+        id="strategyConsultant" 
+        class="mb-16 animate-on-scroll" 
+        data-animation="zoom-in"
+      >
+        <StrategyConsultant :pageData="PageManagementData"/>
       </section>
 
-      <section id="valuableBusiness" class="mb-16">
-        <ValuableBusiness :pageData="PageManagementData" />
+      <section 
+        ref="section8"    
+        id="testimonials" 
+        class="mb-16 animate-on-scroll" 
+        data-animation="zoom-in"
+      >
+        <TestimonialsPage :pageData="PageManagementData"  />
       </section>
 
-      <section id="OurClients" class="mb-16">
-        <OurClients :pageData="PageManagementData" />
+      
+
+      <!-- Slide dari kanan -->
+      <section 
+        ref="section9"
+        id="realLife" 
+        class="mb-16  animate-on-scroll" 
+        data-animation="slide-in-right"
+      >
+        <RealLife :pageData="PageManagementData" />
       </section>
 
-
-
-      <section id="AnakPerusahaan" class="mb-16">
-        <AnakPerusahaan :pageData="PageManagementData" />
+       <section 
+        ref="section10"    
+        id="launchPage" 
+        class="mb-16 animate-on-scroll" 
+        data-animation="zoom-in"
+      >
+        <LaunchPage :pageData="PageManagementData"/>
       </section>
+      
+     
 
-      <section id="GalerryPage" class="mb-16">
-        <GalerryPage :pageData="PageManagementData" />
-      </section>
-
-      <section id="contactpage" class="mb-16">
-        <contact-page :pageData="PageManagementData" />
-      </section>
-
-      <!-- <section id="contactpage2" class="mb-16">
-        <contact-page2 :pageData="PageManagementData" />
-      </section> -->
-
-      <section id="CtaPage" class="mb-16">
-        <CtaPage :pageData="PageManagementData" />
-      </section>
     </template>
 
     <template v-else>
@@ -71,52 +111,99 @@
 </template>
 
 <script setup>
-import { onMounted, ref, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import axios from 'axios'
 import { API_ENDPOINTS } from '@/config/api'
 
 // Import komponen halaman
 import KeunggulanPage from '@/components/SliderHome.vue'
 import AboutPSG from '@/components/AboutPSG.vue'
-import OurClients from '@/components/OurClients.vue'
 import PilarPSG from '@/components/PilarPSG.vue'
 import StrategyConsultant from '@/components/StrategyConsultant.vue'
-import AnakPerusahaan from '@/components/AnakPerusahaan.vue'
-import contactPage from '@/components/ContactInfo.vue'
-// import contactPage2 from '@/components/ContactForm.vue'
-import CtaPage from '@/components/CtaPage.vue'
-import GalerryPage from '@/components/GalerryPage.vue'
 import RealLife from '@/components/RealLife.vue'
-import OurTeam from '@/components/OurTeam.vue'
-import OurConsultant from '@/components/OurConsultant.vue'
-import GuaranteedAccount from '@/components/GuaranteedAccount.vue'
-import ValuableBusiness from '@/components/ValuableBusiness.vue'
+import OurClients from '@/components/OurClients.vue'
+import IntegrationPage from '@/components/IntegrationPage.vue'
+import SimplifyAnalytics from '@/components/SimplifyAnalytics.vue'
+import StepsPage from '@/components/StepsPage.vue'
+import TestimonialsPage from '@/components/TestimonialsPage.vue'
+import LaunchPage from '@/components/LaunchPage.vue'
+
 
 // State utama
 const PageManagementData = ref({})
 const isReady = ref(false)
 
-// Lifecycle: Load data custom page
-// onMounted(async () => {
-//   try {
-//     const localData = localStorage.getItem('customPageData:Home')
-//     if (localData) {
-//       PageManagementData.value = JSON.parse(localData)
-//     }
+// Refs untuk sections
+const section1 = ref(null)
+const section2 = ref(null)
+const section3 = ref(null)
+const section4 = ref(null)
+const section5 = ref(null)
+const section6 = ref(null)
+const section7 = ref(null)
+const section8 = ref(null)
+const section9 = ref(null)
+const section10 = ref(null)
 
-//     const res = await axios.get(`${API_ENDPOINTS.customPages}?isFrontend=true&page=Home`)
-//     const dataByTag = res.data?.data || {}
+// Intersection Observer
+let observer = null
 
-//     PageManagementData.value = dataByTag
-//     localStorage.setItem('customPageData:Home', JSON.stringify(dataByTag))
-//   } catch (err) {
-//     console.error('Gagal load custom page:', err.response?.data || err.message)
-//   } finally {
-//     isReady.value = true
-//   }
-//   console.log(' DATA PageManagementData:', PageManagementData.value)
+const setupIntersectionObserver = () => {
+  const options = {
+    root: null,
+    rootMargin: '100px',
+    threshold: 0.05
+  }
 
-// })
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const animation = entry.target.getAttribute('data-animation')
+        const sectionId = entry.target.id || 'unknown'
+        
+        console.log(`🎬 Animating section: ${sectionId} with ${animation}`)
+        
+        if (animation) {
+          // Pastikan element visible dulu
+          entry.target.style.opacity = '0'
+          
+          // Trigger reflow
+          void entry.target.offsetWidth
+          
+          // Add animation class
+          entry.target.classList.add(`animate-${animation}`)
+
+          // Cleanup after animation complete
+          setTimeout(() => {
+            entry.target.style.opacity = '1'
+            observer.unobserve(entry.target)
+          }, 1100) // Lebih lama dari durasi animasi terpanjang
+        }
+      }
+    })
+  }, options)
+
+  // Observe semua sections
+  const sections = [
+    section1.value,
+    section2.value,
+    section3.value,
+    section4.value,
+    section5.value,
+    section6.value,
+    section7.value,
+    section8.value,
+    section9.value,
+    section10.value,
+    section10.value,
+  ]
+
+  sections.forEach(section => {
+    if (section) {
+      observer.observe(section)
+    }
+  })
+}
 
 onMounted(async () => {
   // Ambil dari localStorage dulu
@@ -136,8 +223,11 @@ onMounted(async () => {
   } finally {
     isReady.value = true
 
-    // Scroll ke target jika ada
+    // Setup Intersection Observer setelah DOM ready
     nextTick(() => {
+      setupIntersectionObserver()
+
+      // Scroll ke target jika ada
       const target = localStorage.getItem('scrollTarget')
       if (target) {
         const el = document.getElementById(target)
@@ -161,5 +251,172 @@ onMounted(async () => {
   console.log(' DATA PageManagementData:', PageManagementData.value)
 })
 
-
+onUnmounted(() => {
+  // Cleanup observer
+  if (observer) {
+    observer.disconnect()
+  }
+})
 </script>
+
+<style scoped>
+/* Default state - hidden */
+.animate-on-scroll {
+  opacity: 0;
+  will-change: transform, opacity;
+  min-height: 10px; /* Prevent collapse */
+}
+
+/* Fade In Down */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.8s ease-out forwards;
+}
+
+/* Slide In Left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+/* Zoom In */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.8s ease-out forwards;
+}
+
+/* Slide In Right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+/* Fade In Up */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Rotate In */
+@keyframes rotateIn {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+.animate-rotate-in {
+  animation: rotateIn 0.8s ease-out forwards;
+}
+
+/* Bounce In */
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(20px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-5px);
+  }
+  70% {
+    transform: scale(0.95) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounceIn 1s ease-out forwards;
+  opacity: 1 !important; /* Force visibility after animation */
+}
+
+/* Slide Up */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+  opacity: 1 !important; /* Force visibility after animation */
+}
+
+/* Scale In */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.8s ease-out forwards;
+}
+</style>

@@ -31,7 +31,7 @@ const routes = [
 
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHashHistory('/compro8/'),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {

@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white py-18 px-4 overflow-hidden font-poppins antialiased">
-    <div class="max-w-full mx-auto lg:px-12">
-      <h2 class="text-3xl md:text-4xl font-semibold text-gray-800 text-center mb-2">
+  <div class="bg-transparent py-18 px-4 overflow-hidden font-poppins antialiased">
+    <div class="max-w-full mx-auto lg:px-12 mt-16">
+      <h2 class="text-base font-normal text-gray-800 text-center mb-2">
         {{ title }}
       </h2>
       <p class="text-gray-600 text-center text-sm mb-12 max-w-2xl mx-auto">
@@ -9,8 +9,8 @@
       </p>
 
       <div class="relative overflow-hidden">
-        <div class="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
-        <div class="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
+        <div class="absolute left-0 top-0 h-full w-16 bg-transparent z-10"></div>
+        <div class="absolute right-0 top-0 h-full w-16 bg-transparent z-10"></div>
 
         <div class="overflow-hidden w-full pb-2">
           <div class="flex items-center space-x-1 w-max animate-scroll">
@@ -23,7 +23,7 @@
               <img
                 :src="client.image"
                 :alt="client.name"
-                class="h-auto w-auto max-h-20 max-w-40 object-contain"
+                class="h-auto w-auto max-h-30 max-w-40 object-contain"
               />
             </div>
 
@@ -59,14 +59,14 @@ onMounted(() => {
   try {
     const data = JSON.parse(rawStorage)
 
-    // --- client_title: untuk title dan content
-    const rawTitle = data['client_title'] || data['client_title']
+    // --- trusted4: untuk title dan content
+    const rawTitle = data['trusted4'] || data['trusted4']
     const parsedTitle = typeof rawTitle === 'string' ? JSON.parse(rawTitle) : rawTitle
     title.value = parsedTitle?.title || ''
     content.value = parsedTitle?.content || ''
 
-    // --- client_image: list logo client
-    const rawClients = data['client_image'] || data['client_image']
+    // --- trust_item4: list logo client
+    const rawClients = data['trust_item4'] || data['trust_item4']
     let parsedList = []
 
     if (typeof rawClients === 'string') {
@@ -87,7 +87,7 @@ onMounted(() => {
           parsedList = [parsed]
         }
       } catch (e) {
-        console.warn(' Gagal parsing client_image (string):', e.message)
+        console.warn(' Gagal parsing trust_item4 (string):', e.message)
       }
     } else if (Array.isArray(rawClients)) {
       parsedList = rawClients.map((item) => {

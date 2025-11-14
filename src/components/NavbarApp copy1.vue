@@ -1,49 +1,36 @@
 <template>
-  <nav class="absolute top-0 left-0 right-0 w-full z-50 bg-transparent">
-    <div class="flex items-center px-6 md:px-10 py-4 lg:px-16">
+  <nav class="absolute top-0 left-0 right-0 w-full z-50 bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-transparent">
+    <div class="flex items-center justify-between px-6 md:px-10 py-4 lg:px-16">
       <!-- Logo & Title -->
-      <div class="flex items-center space-x-3 lg:flex-1">
-        <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="h-12 w-auto" />
+      <div class="flex items-center space-x-3">
+        <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="h-10 w-auto" />
         <div class="text-white">
-          <p class="text-xl font-semibold text-wide">{{ title }}</p>
+          <p class="text-xl font-semibold">{{ title }}</p>
+          <p class="text-xs font-light tracking-wide opacity-90">{{ siteDescription }}</p>
         </div>
       </div>
 
-      <!-- Desktop Menu (Centered) -->
-      <div class="hidden lg:flex space-x-1 items-center justify-center lg:flex-1">
+      <!-- Desktop Menu -->
+      <div class="hidden lg:flex space-x-1 items-center">
         <button
           v-for="menu in menus"
           :key="menu.id"
           @click="navigateOrScroll(menu)"
           class="relative text-white text-sm font-medium tracking-wide px-4 py-2 hover:bg-white/10 transition-all duration-300 rounded"
+          :class="isActiveMenu(menu) ? 'bg-white/20' : ''"
         >
           {{ menu.title }}
-          <span
-            v-if="isActiveMenu(menu)"
-            class="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-          ></span>
         </button>
-      </div>
-      
-      <!-- Contact Button (Right) -->
-      <div class="hidden lg:flex items-center justify-end lg:flex-1">
-        <component
-          :is="hero.contact_us2.link
-                ? (isExternal(hero.contact_us2.link) ? 'a' : 'router-link')
-                : 'button'"
-          v-if="hero.contact_us2 && (hero.contact_us2.text || hero.contact_us2.link)"
-          :href="hero.contact_us2.link && isExternal(hero.contact_us2.link) ? hero.contact_us2.link : null"
-          :to="hero.contact_us2.link && !isExternal(hero.contact_us2.link) ? hero.contact_us2.link : null"
-          class="flex items-center space-x-2 border-2 border-white text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-white hover:text-[#1e3a8a] transition-all duration-300"
-          :target="hero.contact_us2.link && isExternal(hero.contact_us2.link) ? '_blank' : null"
-          rel="noopener noreferrer"
+        
+        <!-- Contact Button -->
+        <button
+          class="ml-4 flex items-center space-x-2 border-2 border-white text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-white hover:text-[#1e3a8a] transition-all duration-300"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
           </svg>
-          <span>{{ hero.contact_us2.text || 'Contact Us' }}</span>
-        </component>
+          <span>Contact us today</span>
+        </button>
       </div>
 
       <!-- Hamburger Button -->
@@ -116,18 +103,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watchEffect} from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_ENDPOINTS } from '@/config/api'
-
-/* global defineProps */
-const props = defineProps({
-  pageData: {
-    type: Object,
-    default: () => ({})
-  }
-})
 
 const router = useRouter()
 const route = useRoute()
@@ -136,29 +115,6 @@ const menus = ref([])
 const logoUrl = ref('')
 const title = ref('Pasifik Sukses Gemilang')
 const siteDescription = ref('Mitra Sukses Bersama')
-const hero = ref({
-  contact_us2: { text: '', link: '' }
-})
-
-function parse(data) {
-  if (!data) return {}
-  return typeof data === 'string' ? JSON.parse(data) : data
-}
-
-function getItemByTag(tag, allData) {
-  if (!allData) return null
-  // cari key yang sama tanpa peduli huruf besar/kecil
-  const foundKey = Object.keys(allData).find(k => k.toLowerCase() === String(tag).toLowerCase())
-  const section = foundKey ? allData[foundKey] : null
-  if (!section) return null
-
-  const parseItem = (item) => {
-    const parsed = parse(item)
-    if (parsed.items) return parse(parsed.items)
-    return parsed
-  }
-  return Array.isArray(section) ? section.map(parseItem) : [parseItem(section)]
-}
 
 // Check if menu is active
 const isActiveMenu = (menu) => {
@@ -231,38 +187,6 @@ const fetchMenu = async () => {
   }
 }
 
-function isExternal(link) {
-  return /^https?:\/\//.test(link)
-}
-
-watchEffect(() => {
-  const allData = props.pageData || {}
-
-  // coba ambil langsung by tag (case-insensitive)
-  let primary = getItemByTag('contact_us2', allData)?.[0]
-
-  // fallback: beberapa setup menaruh tombol ini di dalam slider_home
-  if (!primary) {
-    const sliderHome = getItemByTag('slider_home', allData)?.[0]
-    // cari field yang mirip di dalam slider_home
-    if (sliderHome) {
-      primary = sliderHome.contact_us2 || sliderHome.primary_button3 || null
-    }
-  }
-
-  // set hero, map content -> link, dan beri default aman
-  hero.value = {
-    ...hero.value,
-    contact_us2: {
-      text: primary?.title || primary?.text || 'Contact Us',
-      link: primary?.content || primary?.link || ''   // content dipakai sebagai link
-    }
-  }
-
-  // debug optional
-  // console.log('Resolved navbar button:', hero.value.contact_us2)
-})
-
 onMounted(() => {
   fetchSettings()
   fetchMenu()
@@ -275,7 +199,6 @@ onMounted(() => {
       localStorage.removeItem('scrollTarget')
     })
   }
-  console.log('contact_us2 from pageData:', getItemByTag('contact_us2', props.pageData))
 })
 </script>
 

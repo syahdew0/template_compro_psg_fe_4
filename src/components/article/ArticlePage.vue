@@ -14,27 +14,43 @@
         <!-- Badge -->
         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFD43B]/15 border border-[#FFD43B]/40 backdrop-blur-sm">
           <div class="w-2 h-2 rounded-full bg-[#FFD43B] animate-pulse"></div>
-          <span class="text-sm font-semibold text-gray-900">Latest Updates</span>
+          <span class="text-sm font-semibold text-gray-900">Latest Articles</span>
         </div>
 
         <!-- Title -->
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
           Pasifik Sukses Gemilang
-          <span class="block text-[#FFD43B]">Careers</span>
+          <span class="block text-[#FFD43B]">Articles</span>
         </h1>
 
         <!-- Subtitle -->
         <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-          Lowongan pekerjaan terbaru dan informasi seputar perusahaan kami
+          Artikel terbaru dan informasi seputar teknologi dan industri
         </p>
       </div>
 
+      <!-- Loading State -->
+      <div v-if="loading" class="text-center py-20">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-[#FFD43B]/10 flex items-center justify-center">
+          <i class="fa-solid fa-spinner fa-spin text-4xl text-[#FFD43B]"></i>
+        </div>
+        <p class="text-gray-500 text-lg">Memuat artikel...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="text-center py-20">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+          <i class="fa-solid fa-exclamation-triangle text-4xl text-red-500"></i>
+        </div>
+        <p class="text-red-500 text-lg">{{ error }}</p>
+      </div>
+
       <!-- Jika tidak ada postingan -->
-      <div v-if="posts.length === 0" class="text-center py-20">
+      <div v-else-if="posts.length === 0" class="text-center py-20">
         <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-[#FFD43B]/10 flex items-center justify-center">
           <i class="fa-solid fa-newspaper text-4xl text-[#FFD43B]/50"></i>
         </div>
-        <p class="text-gray-500 text-lg">Belum ada postingan yang tersedia saat ini.</p>
+        <p class="text-gray-500 text-lg">Belum ada artikel yang tersedia saat ini.</p>
       </div>
 
       <!-- Grid Postingan -->
@@ -45,17 +61,25 @@
           class="group relative bg-white rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-[#FFD43B]/50 hover:shadow-2xl transition-all duration-300"
           ref="postCards"
         >
-          <router-link :to="`/careers/${post.slug}`" class="block">
+          <router-link :to="`/article/${post.slug}`" class="block">
             <!-- Image Container -->
             <div class="relative overflow-hidden aspect-video bg-gray-100">
               <img
                 :src="getImageUrl(post.thumbnail_url)"
-                alt="Thumbnail"
+                :alt="post.title"
                 class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                @error="handleImageError"
               />
               
               <!-- Overlay Gradient -->
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              
+              <!-- Category Badge -->
+              <div class="absolute top-4 left-4">
+                <span class="px-3 py-1 text-xs font-semibold bg-[#FFD43B] text-black rounded-full">
+                  Article
+                </span>
+              </div>
               
               <!-- Floating Read More Button -->
               <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
@@ -83,13 +107,10 @@
               </h2>
 
               <!-- Excerpt -->
-              <!-- <p class="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-                {{ post.excerpt || post.content?.slice(0, 150) }}
-              </p> -->
               <p 
-  class="text-sm text-gray-600 line-clamp-3 leading-relaxed"
-  v-html="post.excerpt || (post.content ? post.content.slice(0, 150) : '')"
-></p>
+                class="text-sm text-gray-600 line-clamp-3 leading-relaxed"
+                v-html="getExcerpt(post)"
+              ></p>
 
               <!-- Read More Link -->
               <div class="flex items-center gap-2 text-[#FFD43B] font-semibold text-sm group-hover:gap-3 transition-all duration-300">
@@ -107,7 +128,7 @@
       </div>
 
       <!-- Pagination (if needed later) -->
-      <div v-if="posts.length > 0" class="mt-16 flex justify-center">
+      <div v-if="posts.length > 0 && posts.length >= 9" class="mt-16 flex justify-center">
         <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border-2 border-gray-200 hover:border-[#FFD43B]/50 transition-all duration-300 cursor-pointer">
           <span class="text-sm font-semibold text-gray-700">Load More</span>
           <i class="fa-solid fa-chevron-down text-[#FFD43B] text-xs"></i>
@@ -127,6 +148,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 const posts = ref([])
+const loading = ref(true)
+const error = ref(null)
 const headerEl = ref(null)
 const postCards = ref([])
 
@@ -135,13 +158,30 @@ function getImageUrl(path) {
   return path.startsWith('http') ? path : `${API_ENDPOINTS.media}${path}`
 }
 
+function handleImageError(event) {
+  event.target.src = 'https://via.placeholder.com/600x400?text=Image+Not+Found'
+}
+
 function formatDate(dateStr) {
+  if (!dateStr) return 'Tanggal tidak tersedia'
   const date = new Date(dateStr)
   return date.toLocaleDateString('id-ID', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+}
+
+function getExcerpt(post) {
+  if (post.excerpt) {
+    return post.excerpt
+  }
+  if (post.content) {
+    // Remove HTML tags and get first 150 characters
+    const text = post.content.replace(/<[^>]*>/g, '')
+    return text.slice(0, 150) + (text.length > 150 ? '...' : '')
+  }
+  return 'Tidak ada deskripsi tersedia'
 }
 
 // Animations
@@ -191,25 +231,43 @@ const animateCards = () => {
 }
 
 onMounted(async () => {
-   try {
+  try {
+    loading.value = true
+    error.value = null
+    
     const res = await axios.get(`${API_ENDPOINTS.posts}?type=post`)
     console.log('Full API Response:', res.data)
     
-    // Filter dengan struktur API yang benar
+    // Filter posts dengan kategori 'article'
     posts.value = res.data.data.filter(post => {
+      // Pastikan post published
       const isPublished = post.status === 'published'
+      
+      // Check if post has categories
       const hasCategories = Array.isArray(post.categories) && post.categories.length > 0
       
-      // Tampilkan post yang punya kategori 'careers'
-      const hasValidCategory = hasCategories && 
-        post.categories.some(cat => 
-          cat.slug === 'careers'
-        )
+      if (!hasCategories) {
+        console.log('Post tanpa kategori:', post.title)
+        return false
+      }
       
-      return isPublished && hasValidCategory
+      // Check if any category has slug 'article'
+      const hasArticleCategory = post.categories.some(cat => {
+        console.log('Checking category:', cat.slug)
+        return cat.slug === 'article'
+      })
+      
+      if (isPublished && hasArticleCategory) {
+        console.log('✓ Post matched:', post.title, 'Categories:', post.categories.map(c => c.slug))
+      }
+      
+      return isPublished && hasArticleCategory
     })
     
-    console.log('Filtered posts:', posts.value)
+    console.log(`Total posts filtered: ${posts.value.length}`)
+    console.log('Filtered posts:', posts.value.map(p => ({ title: p.title, categories: p.categories.map(c => c.slug) })))
+
+    loading.value = false
 
     // Trigger animations after DOM update
     await nextTick()
@@ -218,7 +276,9 @@ onMounted(async () => {
     }, 100)
   } catch (err) {
     console.error('Gagal memuat postingan:', err)
-    console.error('Error details:', err.response?.data)
+    console.error('Error details:', err.response?.data || err.message)
+    error.value = 'Gagal memuat artikel. Silakan coba lagi nanti.'
+    loading.value = false
   }
 })
 </script>
@@ -253,5 +313,15 @@ onMounted(async () => {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
 }
 </style>

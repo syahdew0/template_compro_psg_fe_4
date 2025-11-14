@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, onMounted } from 'vue'
 
 /* global defineProps */
 const props = defineProps({
@@ -76,52 +76,135 @@ const headerContent = ref('Guaranteed Accountability')
 const headerTitle = ref('We deliver results')
 const results = ref([])
 
+// Parse function yang robust (sama seperti di AboutPSG.vue)
 function parse(data) {
-  if (!data) return {}
-  return typeof data === 'string' ? JSON.parse(data) : data
+  if (data == null) return null
+  let out = data
+
+  if (typeof out === 'string') {
+    try {
+      out = JSON.parse(out)
+    } catch (e) {
+      // gagal parse → biarkan apa adanya
+      out = data
+    }
+  }
+
+  if (Array.isArray(out)) {
+    out = out
+      .map(it => {
+        if (typeof it === 'string') {
+          try {
+            return JSON.parse(it)
+          } catch (e) {
+            return null // buang item yang invalid
+          }
+        }
+        return it
+      })
+      .filter(Boolean)
+  }
+  return out
 }
 
-watchEffect(() => {
-  const allData = props.pageData || {}
+// toHttps function untuk ensure HTTPS
+function toHttps(url) {
+  if (!url || typeof url !== 'string') return ''
+  return url.startsWith('http://apicompro.phisoft.co.id')
+    ? url.replace('http://', 'https://')
+    : url
+}
 
-  // Parse guaranteed3 for header (title and content)
-  const guaranteed3Raw = allData.guaranteed3
-  const guaranteed3 = parse(guaranteed3Raw)
-  
-  if (guaranteed3?.title) {
-    headerTitle.value = guaranteed3.title
-  }
-  if (guaranteed3?.content) {
-    headerContent.value = guaranteed3.content
-  }
-
-  // Parse guaranteed_persen3 for metrics
-  const persenRaw = allData.guaranteed_persen3
-  let persenData = parse(persenRaw)
-  
-  if (persenData && !Array.isArray(persenData)) {
-    persenData = [persenData]
+// Load data dari localStorage (penting untuk production!)
+onMounted(() => {
+  const raw = localStorage.getItem('customPageData:Home')
+  if (!raw) {
+    console.warn('Data halaman Home tidak ditemukan di localStorage')
+    return
   }
 
-  // Parse guaranteed_descript3 for testimonials and person info
-  const descriptRaw = allData.guaranteed_descript3
-  let descriptData = parse(descriptRaw)
-  
-  if (descriptData && !Array.isArray(descriptData)) {
-    descriptData = [descriptData]
-  }
+  try {
+    const data = JSON.parse(raw)
 
-  // Combine data: metrics with testimonials
-  if (Array.isArray(persenData) && Array.isArray(descriptData)) {
-    results.value = persenData.map((persen, index) => {
-      const descript = descriptData[index] || {}
+    // === guaranteed3 (header) ===
+    const guaranteed3Raw = data.guaranteed3 ?? data.Guaranteed3 ?? null
+    const guaranteed3 = parse(guaranteed3Raw)
+    
+    if (Array.isArray(guaranteed3) && guaranteed3.length) {
+      headerTitle.value = guaranteed3[0]?.title || headerTitle.value
+      headerContent.value = guaranteed3[0]?.content || headerContent.value
+    } else if (guaranteed3) {
+      headerTitle.value = guaranteed3.title || headerTitle.value
+      headerContent.value = guaranteed3.content || headerContent.value
+    }
+
+    // === guaranteed_persen3 (metrics) ===
+    const persenRaw = data.guaranteed_persen3 ?? data.Guaranteed_persen3 ?? null
+    const persenParsed = parse(persenRaw)
+    const persenArr = Array.isArray(persenParsed) ? persenParsed : (persenParsed ? [persenParsed] : [])
+
+    // === guaranteed_descript3 (testimonials) ===
+    const descriptRaw = data.guaranteed_descript3 ?? data.Guaranteed_descript3 ?? null
+    const descriptParsed = parse(descriptRaw)
+    const descriptArr = Array.isArray(descriptParsed) ? descriptParsed : (descriptParsed ? [descriptParsed] : [])
+
+    // Combine data
+    results.value = persenArr.map((persen, index) => {
+      const descript = descriptArr[index] || {}
       
       return {
-        metric: persen.content || '', // contoh: "$250k", "30k", "85%"
-        metricLabel: persen.title || '', // contoh: "Generated profits"
-        testimonial: descript.content || '', // deskripsi testimonial
-        personName: descript.title || '', // nama person
-        personImage: descript.image || '' // gambar person
+        metric: persen.content || persen.title || '',
+        metricLabel: persen.title || persen.content || '',
+        testimonial: descript.content || '',
+        personName: descript.title || '',
+        personImage: toHttps(descript.image || '')
+      }
+    })
+
+    console.log('Guaranteed data loaded:', {
+      header: { headerTitle: headerTitle.value, headerContent: headerContent.value },
+      resultsCount: results.value.length,
+      results: results.value
+    })
+  } catch (err) {
+    console.error('Gagal parsing data Guaranteed Account:', err)
+  }
+})
+
+// watchEffect sebagai fallback (jika data di-pass via props)
+watchEffect(() => {
+  const allData = props.pageData || {}
+  
+  // Hanya jalankan jika results masih kosong dan ada data di props
+  if (results.value.length === 0 && Object.keys(allData).length > 0) {
+    const guaranteed3Raw = allData.guaranteed3
+    const guaranteed3 = parse(guaranteed3Raw)
+    
+    if (Array.isArray(guaranteed3) && guaranteed3.length) {
+      headerTitle.value = guaranteed3[0]?.title || headerTitle.value
+      headerContent.value = guaranteed3[0]?.content || headerContent.value
+    } else if (guaranteed3) {
+      headerTitle.value = guaranteed3.title || headerTitle.value
+      headerContent.value = guaranteed3.content || headerContent.value
+    }
+
+    const persenRaw = allData.guaranteed_persen3
+    const persenParsed = parse(persenRaw)
+    const persenArr = Array.isArray(persenParsed) ? persenParsed : (persenParsed ? [persenParsed] : [])
+
+    const descriptRaw = allData.guaranteed_descript3
+    const descriptParsed = parse(descriptRaw)
+    const descriptArr = Array.isArray(descriptParsed) ? descriptParsed : (descriptParsed ? [descriptParsed] : [])
+
+    results.value = persenArr.map((persen, index) => {
+      const descript = descriptArr[index] || {}
+      
+      return {
+        metric: persen.content || persen.title || '',
+        metricLabel: persen.title || persen.content || '',
+        testimonial: descript.content || '',
+        personName: descript.title || '',
+        personImage: toHttps(descript.image || '')
       }
     })
   }

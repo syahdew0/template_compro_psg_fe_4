@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply font-sans;
+@layer base {
+  html, body, #app { @apply h-full; }
+  body { @apply font-sans antialiased text-gray-900; } /* Inter jadi default */
 }
