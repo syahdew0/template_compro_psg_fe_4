@@ -12,6 +12,7 @@
               :src="imageRight4[0].image" 
               :alt="imageRight4[0]?.title || 'Feature Image 1'"
               class="w-full h-full object-cover rounded-2xl"
+              @error="handleImageError"
             />
             <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-2xl">
               <span class="text-gray-400 text-sm">No Image</span>
@@ -35,7 +36,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
                 </svg>
-              
+                Swipe
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                 </svg>
@@ -63,6 +64,7 @@
                     :alt="`Analytics ${idx + 1}`"
                     class="max-w-full max-h-full object-contain pointer-events-none select-none"
                     draggable="false"
+                    @error="handleImageError"
                   />
                   <!-- Fallback Chart jika tidak ada gambar -->
                   <div v-else class="w-full">
@@ -70,7 +72,7 @@
                       <div>
                         <div class="flex items-center gap-2 mb-2">
                           <h4 class="text-3xl font-bold text-gray-900">2h 20m</h4>
-                          <span class="text-gray-400">↑</span>
+                          <span class="text-gray-400">→</span>
                         </div>
                         <p class="text-sm text-gray-500">Average time you spent per day</p>
                       </div>
@@ -112,6 +114,7 @@
               :src="imageLeft4[0].image" 
               :alt="imageLeft4[0]?.title || 'Feature Image 1'"
               class="w-full h-full object-cover rounded-2xl"
+              @error="handleImageError"
             />
             <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-2xl">
               <span class="text-gray-400 text-sm">No Image</span>
@@ -127,6 +130,7 @@
               :src="imageLeft4[1].image" 
               :alt="imageLeft4[1]?.title || 'Feature Image 2'"
               class="w-full h-full object-cover rounded-2xl"
+              @error="handleImageError"
             />
             <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-2xl">
               <span class="text-gray-400 text-sm">No Image</span>
@@ -160,6 +164,7 @@
               :src="imageRight4[1].image" 
               :alt="imageRight4[1]?.title || 'Feature Image 2'"
               class="w-full h-full object-cover rounded-2xl"
+              @error="handleImageError"
             />
             <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-2xl">
               <span class="text-gray-400 text-sm">No Image</span>
@@ -214,6 +219,12 @@ const featureList = ref([
   'Multi-Channel Support'
 ])
 
+// Handle image load errors
+const handleImageError = (e) => {
+  console.error('Failed to load image:', e.target.src)
+  e.target.style.display = 'none'
+}
+
 // Drag functionality
 const startDrag = (e) => {
   if (!imageCarousel.value) return
@@ -243,7 +254,7 @@ const onMouseMove = (e) => {
   e.preventDefault()
   
   const x = e.clientX
-  const walk = (startX.value - x) * 1.5 // Adjust sensitivity
+  const walk = (startX.value - x) * 1.5
   imageCarousel.value.scrollLeft = scrollLeft.value + walk
 }
 
@@ -296,70 +307,156 @@ const handleScroll = () => {
   updateCurrentIndex()
 }
 
-function parse(data) {
-  if (!data) return {}
-  return typeof data === 'string' ? JSON.parse(data) : data
+// IMPROVED: Deep parse function yang handle double-encoded JSON
+function deepParse(data) {
+  if (!data) return null
+  
+  // Jika sudah object/array, return langsung
+  if (typeof data === 'object') return data
+  
+  // Jika string, coba parse berulang sampai dapat object
+  if (typeof data === 'string') {
+    try {
+      let parsed = data
+      // Loop parsing sampai dapat object/array atau error
+      while (typeof parsed === 'string') {
+        const temp = JSON.parse(parsed)
+        // Jika hasil parsing sama dengan input, break untuk avoid infinite loop
+        if (temp === parsed) break
+        parsed = temp
+      }
+      return parsed
+    } catch (e) {
+      console.warn('Failed to parse JSON:', e.message, data)
+      return null
+    }
+  }
+  
+  return data
+}
+
+// IMPROVED: Extract image URL dari berbagai format data
+function extractImageUrl(item) {
+  if (!item) return null
+  
+  // Jika string langsung (URL)
+  if (typeof item === 'string' && (item.startsWith('http') || item.startsWith('/'))) {
+    return item
+  }
+  
+  // Jika object dengan property image
+  if (typeof item === 'object') {
+    return item.image || item.url || item.src || null
+  }
+  
+  return null
+}
+
+// IMPROVED: Process array data dengan lebih robust
+function processArrayData(data) {
+  if (!data) return []
+  
+  const parsed = deepParse(data)
+  
+  if (!parsed) return []
+  
+  // Jika array
+  if (Array.isArray(parsed)) {
+    return parsed.map(item => {
+      // Deep parse setiap item
+      const parsedItem = deepParse(item)
+      
+      // Jika item adalah string JSON, parse lagi
+      if (typeof parsedItem === 'string') {
+        try {
+          return JSON.parse(parsedItem)
+        } catch {
+          return { content: parsedItem }
+        }
+      }
+      
+      return parsedItem
+    })
+  }
+  
+  // Jika single object, wrap dalam array
+  if (typeof parsed === 'object') {
+    return [parsed]
+  }
+  
+  return []
 }
 
 watchEffect(() => {
   const allData = props.pageData || {}
-
-  // Parse about_powered4 data
-  const poweredData = parse(allData.about_powered4)
   
-  if (Array.isArray(poweredData)) {
-    // Extract images dari array
+  console.log('🔍 Raw pageData:', allData)
+
+  // Process about_powered4 data
+  const poweredData = processArrayData(allData.about_powered4)
+  console.log('✅ Processed about_powered4:', poweredData)
+  
+  if (poweredData.length > 0) {
+    // Extract images dengan handling berbagai format
     carouselImages.value = poweredData
-      .map(item => item.image)
-      .filter(img => img) // Remove empty images
+      .map(item => extractImageUrl(item))
+      .filter(img => img && img.length > 0)
+    
+    console.log('🖼️ Carousel images:', carouselImages.value)
     
     // Set feature data
     if (poweredData[0]) {
-      feature1.value = { title: poweredData[0].title, content: poweredData[0].content }
+      feature1.value = {
+        title: poweredData[0].title || '',
+        content: poweredData[0].content || ''
+      }
     }
     if (poweredData[1]) {
-      feature3.value = { title: poweredData[1].title, content: poweredData[1].content }
+      feature3.value = {
+        title: poweredData[1].title || '',
+        content: poweredData[1].content || ''
+      }
     }
     if (poweredData[2]) {
-      feature4.value = { title: poweredData[2].title, content: poweredData[2].content }
+      feature4.value = {
+        title: poweredData[2].title || '',
+        content: poweredData[2].content || ''
+      }
     }
     if (poweredData[3]) {
-      feature6.value = { title: poweredData[3].title, content: poweredData[3].content }
+      feature6.value = {
+        title: poweredData[3].title || '',
+        content: poweredData[3].content || ''
+      }
     }
     if (poweredData[4]) {
       mainFeature.value = {
-        title: poweredData[4].title,
-        description: poweredData[4].content,
+        title: poweredData[4].title || 'AI-Powered Conversations',
+        description: poweredData[4].content || '',
         subtitle: poweredData[4].subtitle || 'Real-Time Analytics',
         analytics: poweredData[4].analytics || ''
       }
     }
-  } else if (poweredData.image) {
-    // Single object
-    carouselImages.value = [poweredData.image]
-    feature1.value = { title: poweredData.title, content: poweredData.content }
   }
 
   // Jika tidak ada gambar, tampilkan fallback chart
   if (carouselImages.value.length === 0) {
-    carouselImages.value = [null] // Trigger fallback chart
+    carouselImages.value = [null]
   }
 
-  // Parse about_image_left4 data
-  const imageLeft4Data = parse(allData.about_image_left4)
-  if (Array.isArray(imageLeft4Data)) {
-    imageLeft4.value = imageLeft4Data
-  }
+  // Process about_image_left4 data
+  const imageLeft4Data = processArrayData(allData.about_image_left4)
+  console.log('✅ Processed about_image_left4:', imageLeft4Data)
+  imageLeft4.value = imageLeft4Data
 
-  // Parse about_image_right4 data
-  const imageRight4Data = parse(allData.about_image_right4)
-  if (Array.isArray(imageRight4Data)) {
-    imageRight4.value = imageRight4Data
-  }
+  // Process about_image_right4 data
+  const imageRight4Data = processArrayData(allData.about_image_right4)
+  console.log('✅ Processed about_image_right4:', imageRight4Data)
+  imageRight4.value = imageRight4Data
 
-  // Parse feature list
-  const featuresData = parse(allData.about_powered_features)
-  if (Array.isArray(featuresData)) {
+  // Process feature list
+  const featuresData = processArrayData(allData.about_powered_features)
+  if (featuresData.length > 0) {
     featureList.value = featuresData.map(f => f.title || f.content || f)
   }
 })
